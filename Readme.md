@@ -1,5 +1,7 @@
 # haskell-stack-trace-plugin
 
+[![Hackage](https://img.shields.io/hackage/v/haskell-stack-trace-plugin.svg)](https://hackage.haskell.org/package/haskell-stack-trace-plugin)
+
 This plugin allow implicitly add `HasCallStack` class to every top-level function for all module. Hence, we can  to get completely continuous call stack.
 
 1. (implicitly) Import [GHC.Stack](https://www.stackage.org/haddock/lts-12.21/base-4.11.1.0/GHC-Stack.html) for all modules.
