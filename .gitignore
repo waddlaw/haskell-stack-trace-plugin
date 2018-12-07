@@ -1,0 +1,6 @@
+dist/
+dist-*/
+.ghc.environment.*
+cabal.project.local
+
+*~
