@@ -68,7 +68,7 @@ Yes, add `import GHC.Stack` to above example.
 Fix and rebuild!
 
 ```shell
-$ cabal new-build
+$ cabal new-run
 example: fError
 CallStack (from HasCallStack):
   error, called at example/Main.hs:41:10 in main:Main
