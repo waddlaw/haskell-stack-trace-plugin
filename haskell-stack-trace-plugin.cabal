@@ -2,16 +2,22 @@ name:                haskell-stack-trace-plugin
 version:             0.1.0.0
 -- synopsis:
 -- description:
--- bug-reports:
+homepage:            https://github.com/waddlaw/haskell-stack-trace-plugin
+bug-reports:         https://github.com/waddlaw/haskell-stack-trace-plugin/issues
 license:             MIT
 license-file:        LICENSE
 author:              Shinya Yamaguchi
 maintainer:          ingronze@gmail.com
 copyright:           2018 Shinya Yamaguchi
-category:            Compiler Plugin
+category:            Compiler Plugin, Development, Debug
 build-type:          Simple
-extra-source-files:  CHANGELOG.md
+extra-source-files:  CHANGELOG.md, Readme.md
 cabal-version:       >=1.10
+tested-with:         GHC == 8.6.2
+
+source-repository head
+  type:     git
+  location: git://github.com/waddlaw/haskell-stack-trace-plugin
 
 library
   hs-source-dirs: src
