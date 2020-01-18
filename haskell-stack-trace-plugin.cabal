@@ -44,7 +44,7 @@ library
   if flag(dev)
     ghc-options:
       -Wall -Werror -Wcompat -Wincomplete-uni-patterns
-      -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances
+      -Wnoncanonical-monad-instances
       -Wno-missing-home-modules
 
   -- -Wincomplete-record-updates
