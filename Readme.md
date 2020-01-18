@@ -1,5 +1,6 @@
 # haskell-stack-trace-plugin
 
+![](https://github.com/waddlaw/haskell-stack-trace-plugin/workflows/cabal/badge.svg)
 [![Hackage](https://img.shields.io/hackage/v/haskell-stack-trace-plugin.svg)](https://hackage.haskell.org/package/haskell-stack-trace-plugin)
 
 This plugin allow implicitly add `HasCallStack` class to every top-level function for all module. Hence, we can  to get completely continuous call stack.
