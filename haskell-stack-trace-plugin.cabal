@@ -19,6 +19,11 @@ source-repository head
   type:     git
   location: git://github.com/waddlaw/haskell-stack-trace-plugin
 
+flag dev
+  description:        Turn on development settings.
+  manual:             True
+  default:            False
+
 library
   hs-source-dirs: src
   build-depends:
@@ -28,7 +33,16 @@ library
   exposed-modules:
     StackTrace.Plugin
 
-  default-language: Haskell2010
+  if flag(dev)
+    ghc-options:      -Wall -Werror -Wcompat
+                      -- -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wnoncanonical-monad-instances
+                      -Wnoncanonical-monadfail-instances
+                      -Wno-missing-home-modules
+  else
+    ghc-options:      -O2 -Wall
+  default-language:   Haskell2010
 
 executable example
   main-is: Main.hs
