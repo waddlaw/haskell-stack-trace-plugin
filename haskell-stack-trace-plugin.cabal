@@ -49,7 +49,7 @@ library
 
   -- -Wincomplete-record-updates
   else
-    ghc-options: -O2 -Wall
+    ghc-options: -Wall
 
 test-suite test
   import:             common-opts
@@ -68,7 +68,7 @@ test-suite test
     ghc-options: -Wall -Werror
 
   else
-    ghc-options: -O2 -Wall
+    ghc-options: -Wall
 
 executable example
   import:         common-opts
