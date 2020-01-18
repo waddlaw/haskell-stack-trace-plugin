@@ -9,7 +9,7 @@ import System.Process.Typed
 spec :: Spec
 spec = do
   output <- runIO exe
-  expected <- runIO $ BL.readFile "test/resource/ghc86.output"
+  expected <- runIO $ BL.readFile "test/resource/ghc.output"
   it "integration test" $ output `shouldBe` expected
 
 
