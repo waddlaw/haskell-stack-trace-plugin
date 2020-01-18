@@ -1,5 +1,5 @@
 name:                haskell-stack-trace-plugin
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            haskell-stack-trace-plugin
 description:         This plugin allow implicitly add HasCallStack class to every top-level function for all module. Hence, we can to get completely continuous call stack.
 homepage:            https://github.com/waddlaw/haskell-stack-trace-plugin
@@ -23,7 +23,7 @@ library
   hs-source-dirs: src
   build-depends:
     base >=4.12 && <4.13,
-    ghc==8.6.2
+    ghc>=8.6.2 && <8.6.6
 
   exposed-modules:
     StackTrace.Plugin
