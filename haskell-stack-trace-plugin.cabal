@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               haskell-stack-trace-plugin
-version:            0.1.1.0
+version:            0.1.1.1
 synopsis:           haskell-stack-trace-plugin
 description:
   This plugin allow implicitly add HasCallStack class to every top-level function for all module. Hence, we can to get completely continuous call stack.
