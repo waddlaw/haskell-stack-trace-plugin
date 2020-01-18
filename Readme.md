@@ -5,8 +5,8 @@
 
 This plugin allow implicitly add `HasCallStack` class to every top-level function for all module. Hence, we can  to get completely continuous call stack.
 
-1. (implicitly) Import [GHC.Stack](https://www.stackage.org/haddock/lts-12.21/base-4.11.1.0/GHC-Stack.html) for all modules.
-2. Add [HasCallStack](https://www.stackage.org/haddock/lts-12.21/base-4.11.1.0/GHC-Stack.html#t:HasCallStack) constraint for all top-level functions.
+1. (implicitly) Import [GHC.Stack](https://hackage.haskell.org/package/base-4.12.0.0/docs/GHC-Stack.html) for all modules.
+2. Add [HasCallStack](https://hackage.haskell.org/package/base-4.12.0.0/docs/GHC-Stack.html#t:HasCallStack) constraint for all top-level functions.
 
 Requirement: (8.6 <= on GHC)
 
