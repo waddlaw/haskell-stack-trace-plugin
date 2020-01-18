@@ -1,5 +1,9 @@
 # Revision history for haskell-stack-trace-pugin
 
+## Unreleased changes
+
+- Allow GHC-8.8.1
+
 ## 0.1.1.0 -- 2020-01-18
 
 - Ergonomic improvements [#1](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/1) (@khwarizmii)
