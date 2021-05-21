@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        ghc: ["8.6", "8.8", "8.10"]
+        ghc: ["8.6", "8.8", "8.10", "9.0"]
         cabal: ["3.2"]
         cache-version: ["2021-05-21"]
 

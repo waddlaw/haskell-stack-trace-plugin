@@ -5,7 +5,12 @@ module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
+#if __GLASGOW_HASKELL__ >= 900
+import GHC.Plugins
+#else
+
 import GhcPlugins
+#endif
 #if __GLASGOW_HASKELL__ >= 810
 import GHC.Hs
 #endif
@@ -48,7 +53,11 @@ ghcStackImport =
   (simpleImportDecl $ mkModuleName "GHC.Stack")
     {ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName}
 
+#if __GLASGOW_HASKELL__ >= 900
+updateHsModule :: HsModule -> HsModule
+#else
 updateHsModule :: HsModule GhcPs -> HsModule GhcPs
+#endif
 updateHsModule hsm =
   hsm {hsmodImports = hsmodImports', hsmodDecls = hsmodDecls'}
   where
