@@ -2,13 +2,9 @@ name: cabal
 
 on:
   push:
-    branches:
-      - master
-    tags-ignore:
-      - '*'
+    branches: [ master ]
   pull_request:
-    branches:
-      - '*'
+    branches: [ '*' ]
   schedule:
     - cron: "00 15 * * *"
 
@@ -17,40 +13,32 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        ghc: ["8.6.5", "8.8.1", "8.10.4"]
-        cabal: ["3.0"]
+        ghc: ["8.6", "8.8", "8.10"]
+        cabal: ["3.2"]
+        cache-version: ["2021-05-21"]
 
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-haskell@v1
+    - uses: haskell/actions/setup@v1
       with:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: ${{ matrix.cabal }}
 
-    - name: Display ghc & cabal version
-      run: |
-        ghc -V
-        cabal -V
-
     - name: Cache ~/.cabal/store
-      uses: actions/cache@v1.1.0
+      uses: actions/cache@v2
       with:
-        path: ~/.cabal/store
-        key: ${{ matrix.ghc }}-v0-cabal-store-${{ hashFiles('*.cabal') }}
-
-    - name: Cache dist-newstyle
-      uses: actions/cache@v1.1.0
-      with:
-        path: dist-newstyle
-        key: ${{ matrix.ghc }}-v0-cabal-dist-${{ hashFiles('*.cabal') }}
+        path: |
+          ~/.cabal/store
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.cache-version }}-cabal
 
     - name: Install dependencies
       run: |
-        cabal v2-update
-        cabal v2-configure --disable-optimization --enable-tests --write-ghc-environment-files=always -j2
-        cabal v2-build --only-dependencies
+        cabal update
+        cabal configure --disable-optimization --enable-tests --write-ghc-environment-files=always -j2
+        cabal build --only-dependencies
 
     - name: Build & Test
       run: |
-        cabal v2-build --flag dev
-        cabal v2-test --flag dev
+        cabal build --flag dev
+        cabal test --flag dev

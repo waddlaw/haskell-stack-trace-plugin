@@ -12,15 +12,15 @@ bug-reports:
 license:            MIT
 license-file:       LICENSE
 author:             Shinya Yamaguchi
-maintainer:         ingronze@gmail.com
-copyright:          2018-2020 Shinya Yamaguchi
+maintainer:         a@wado.dev
+copyright:          2018-2021 Shinya Yamaguchi
 category:           Compiler Plugin, Development, Debug
 build-type:         Simple
 extra-source-files:
   CHANGELOG.md
   Readme.md
 
-tested-with:        GHC ==8.6.5 || ==8.8.1 || ==8.10.4
+tested-with:        GHC ==8.6.5 || ==8.8.4 || ==8.10.4
 
 source-repository head
   type:     git
@@ -44,10 +44,7 @@ library
   if flag(dev)
     ghc-options:
       -Wall -Werror -Wcompat -Wincomplete-uni-patterns
-      -Wnoncanonical-monad-instances
-      -Wno-missing-home-modules
-
-  -- -Wincomplete-record-updates
+      -Wnoncanonical-monad-instances -Wno-missing-home-modules
   else
     ghc-options: -Wall
 
@@ -57,11 +54,11 @@ test-suite test
   hs-source-dirs:     test
   type:               exitcode-stdio-1.0
   build-depends:
-    , bytestring     ^>=0.10
-    , hspec          ^>=2.7
-    , typed-process  ^>=0.2.6
+    , bytestring     >=0.10 && <0.12
+    , hspec          ^>=2.8
+    , typed-process  ^>=0.2
 
-  build-tool-depends: hspec-discover:hspec-discover ^>=2.7
+  build-tool-depends: hspec-discover:hspec-discover ^>=2.8
   other-modules:      StackTrace.PluginSpec
 
   if flag(dev)
