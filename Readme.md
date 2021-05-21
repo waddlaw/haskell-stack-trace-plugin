@@ -71,7 +71,7 @@ Yes, add `import GHC.Stack` to above example.
 Fix and rebuild!
 
 ```shell
-$ cabal new-run
+$ cabal run example -v0
 example: fError
 CallStack (from HasCallStack):
   error, called at example/Main.hs:41:10 in main:Main
@@ -85,22 +85,20 @@ Hmm, it is not useful. But, you will to be happy when enable this plugin.
 ```
 
 ```shell
-$ cabal new-run
-...
-
+$ cabal run example -v0
 example: fError
 CallStack (from HasCallStack):
-  error, called at example/Main.hs:40:10 in main:Main
-  fError, called at example/Main.hs:36:11 in main:Main
-  f8, called at example/Main.hs:32:16 in main:Main
-  f7, called at example/Main.hs:28:11 in main:Main
-  f6, called at example/Main.hs:24:15 in main:Main
-  f5, called at example/Main.hs:20:8 in main:Main
-  f4, called at example/Main.hs:16:6 in main:Main
-  f3, called at example/Main.hs:12:6 in main:Main
-  f2, called at example/Main.hs:9:6 in main:Main
-  f1, called at example/Main.hs:6:14 in main:Main
-  main, called at example/Main.hs:6:1 in main:Main
+  error, called at example/Main.hs:41:10 in main:Main
+  fError, called at example/Main.hs:37:11 in main:Main
+  f8, called at example/Main.hs:33:16 in main:Main
+  f7, called at example/Main.hs:29:11 in main:Main
+  f6, called at example/Main.hs:25:15 in main:Main
+  f5, called at example/Main.hs:21:8 in main:Main
+  f4, called at example/Main.hs:17:6 in main:Main
+  f3, called at example/Main.hs:13:6 in main:Main
+  f2, called at example/Main.hs:10:6 in main:Main
+  f1, called at example/Main.hs:7:14 in main:Main
+  main, called at example/Main.hs:7:1 in main:Main
 ```
 
 Great!!!
