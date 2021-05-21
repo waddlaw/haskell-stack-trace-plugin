@@ -1,11 +1,17 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
 import GhcPlugins
+#if __GLASGOW_HASKELL__ >= 810
+import GHC.Hs
+#endif
+#if __GLASGOW_HASKELL__ < 810
 import HsSyn
+#endif
 
 type Traversal s t a b
    = forall f. Applicative f =>
@@ -28,11 +34,19 @@ parsedPlugin _ _ pm = do
 ghcStackModuleName :: ModuleName
 ghcStackModuleName = mkModuleName "AutoImported.GHC.Stack"
 
+#if __GLASGOW_HASKELL__ < 810
+importDeclQualified :: Bool
+importDeclQualified = True
+#else
+importDeclQualified :: ImportDeclQualifiedStyle
+importDeclQualified = QualifiedPre
+#endif
+
 ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
   noLoc $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    {ideclQualified = True, ideclAs = Just $ noLoc ghcStackModuleName}
+    {ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName}
 
 updateHsModule :: HsModule GhcPs -> HsModule GhcPs
 updateHsModule hsm =
@@ -91,16 +105,23 @@ updateHsType :: HsType GhcPs -> (Any, HsType GhcPs)
 updateHsType (HsQualTy xty ctxt body) =
   flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
 updateHsType ty@HsTyVar {} =
-  flagASTModified $ HsQualTy noExt (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsAppTy {} =
-  flagASTModified $ HsQualTy noExt (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsFunTy {} =
-  flagASTModified $ HsQualTy noExt (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsListTy {} =
-  flagASTModified $ HsQualTy noExt (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsTupleTy {} =
-  flagASTModified $ HsQualTy noExt (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty = pure ty
+
+#if __GLASGOW_HASKELL__ < 810
+xQualTy = noExt
+#else
+xQualTy :: NoExtField
+xQualTy = NoExtField
+#endif
 
 flagASTModified :: a -> (Any, a)
 flagASTModified a = (Any True, a)
@@ -110,7 +131,7 @@ appendHSC cs = mkHSC : cs
 
 -- make HasCallStack => constraint
 mkHSC :: LHsType GhcPs
-mkHSC = noLoc $ HsTyVar noExt NotPromoted lId
+mkHSC = noLoc $ HsTyVar xQualTy NotPromoted lId
 
 lId :: Located (IdP GhcPs)
 lId = noLoc $ mkRdrQual ghcStackModuleName $ mkClsOcc "HasCallStack"
