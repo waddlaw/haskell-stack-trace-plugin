@@ -2,6 +2,11 @@
 
 ## Unreleased changes
 
+## 0.1.2.0 -- 2021-05-21
+
+- Added support for GHC 8.10 [#7](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/7) (@etorreborre)
+- Added support for GHC 9.0 @waddlaw
+
 ## 0.1.1.1 -- 2020-01-18
 
 - Allow GHC-8.8.1
