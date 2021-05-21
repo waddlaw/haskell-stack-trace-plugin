@@ -130,6 +130,7 @@ updateHsType ty@HsTupleTy {} =
 updateHsType ty = pure ty
 
 #if __GLASGOW_HASKELL__ < 810
+xQualTy :: NoExt
 xQualTy = noExt
 #else
 xQualTy :: NoExtField
