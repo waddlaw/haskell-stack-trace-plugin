@@ -2,6 +2,10 @@
 
 ## Unreleased changes
 
+## 0.1.3.0
+
+- Added support `where` clause [#11](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/11) (@waddlaw)
+
 ## 0.1.2.0 -- 2021-05-21
 
 - Added support for GHC 8.10 [#7](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/7) (@etorreborre)

@@ -48,7 +48,13 @@ f7 = (fromJust f8, fromJust f8)
 
 -- HsAppTy
 f8 :: Maybe Int
-f8 = Just fError
+f8 = Just f9
+
+f9 :: Int
+f9 = f10
+  where
+    f10 :: Int
+    f10 = fError
 
 -- HsTyVar
 fError :: Int
@@ -58,7 +64,7 @@ fError = error "fError"
 This example get error:
 
 ```shell
-$ cabal new-build
+$ cabal build
 example/Main.hs:15:7: error:
     Not in scope: type constructor or class ‘HasCallStack’
    |
@@ -74,7 +80,7 @@ Fix and rebuild!
 $ cabal run example -v0
 example: fError
 CallStack (from HasCallStack):
-  error, called at example/Main.hs:41:10 in main:Main
+  error, called at example/Main.hs:47:10 in main:Main
 ```
 
 Hmm, it is not useful. But, you will to be happy when enable this plugin.
@@ -88,8 +94,10 @@ Hmm, it is not useful. But, you will to be happy when enable this plugin.
 $ cabal run example -v0
 example: fError
 CallStack (from HasCallStack):
-  error, called at example/Main.hs:41:10 in main:Main
-  fError, called at example/Main.hs:37:11 in main:Main
+  error, called at example/Main.hs:47:10 in main:Main
+  fError, called at example/Main.hs:43:11 in main:Main
+  f10, called at example/Main.hs:40:6 in main:Main
+  f9, called at example/Main.hs:37:11 in main:Main
   f8, called at example/Main.hs:33:16 in main:Main
   f7, called at example/Main.hs:29:11 in main:Main
   f6, called at example/Main.hs:25:15 in main:Main
