@@ -5,6 +5,7 @@
 ## 0.1.3.0
 
 - Added support `where` clause [#11](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/11) (@waddlaw)
+- Avoid redundant-constraints warnings [#12](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/12) (@waddlaw)
 
 ## 0.1.2.0 -- 2021-05-21
 
