@@ -72,5 +72,5 @@ executable example
   import:         common-opts
   main-is:        Main.hs
   hs-source-dirs: example
-  ghc-options:    -fplugin=StackTrace.Plugin
+  ghc-options:    -fplugin=StackTrace.Plugin -Wredundant-constraints
   build-depends:  haskell-stack-trace-plugin

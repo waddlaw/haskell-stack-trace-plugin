@@ -18,10 +18,10 @@ f3 = f4 0
 
 -- HsQualTy
 f4 :: Show a => a -> Int
-f4 _ = f5 0 0
+f4 n = f5 (show n) 0
 
 -- HsFunTy
-f5 :: Int -> Int -> Int
+f5 :: String -> Int -> Int
 f5 _ _ = head f6
 
 -- HsListTy

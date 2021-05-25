@@ -160,8 +160,10 @@ updateLHsType = traverse
 
 -- Main process
 updateHsType :: HsType GhcPs -> (Any, HsType GhcPs)
-updateHsType (HsQualTy xty ctxt body) =
-  flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
+updateHsType ty@(HsQualTy xty ctxt body) =
+  if hasHasCallStack (unLoc ctxt)
+    then pure ty
+    else flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
 updateHsType ty@HsTyVar {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsAppTy {} =
@@ -187,6 +189,13 @@ flagASTModified a = (Any True, a)
 
 appendHSC :: HsContext GhcPs -> HsContext GhcPs
 appendHSC cs = mkHSC : cs
+
+hasHasCallStack :: HsContext GhcPs -> Bool
+hasHasCallStack = any (checkHsType . unLoc)
+  where
+    checkHsType :: HsType GhcPs -> Bool
+    checkHsType (HsTyVar _ _ lid) = unLoc lid == (mkRdrUnqual $ mkClsOcc  "HasCallStack")
+    checkHsType _ = False
 
 -- make HasCallStack => constraint
 mkHSC :: LHsType GhcPs
