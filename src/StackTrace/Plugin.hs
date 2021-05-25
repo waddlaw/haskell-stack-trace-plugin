@@ -79,7 +79,6 @@ updateHsModule hsm =
     astTraversal :: Traversal' (LHsDecl GhcPs) (HsType GhcPs)
     astTraversal = updateHsmodDecl
                  . updateHsDecl
-                 . updateSig
                  . updateLHsSigWsType
                  . updateLHsSigType
                  . updateLHsType
@@ -88,9 +87,55 @@ updateHsModule hsm =
 updateHsmodDecl :: Traversal' (LHsDecl GhcPs) (HsDecl GhcPs)
 updateHsmodDecl = traverse
 
-updateHsDecl :: Traversal' (HsDecl GhcPs) (Sig GhcPs)
-updateHsDecl f (SigD xSig s) = SigD xSig <$> f s
+updateHsDecl :: Traversal' (HsDecl GhcPs) (LHsSigWcType GhcPs)
+updateHsDecl f (SigD xSig s) = SigD xSig <$> updateSig f s
+updateHsDecl f (ValD xVal hsBind) = ValD xVal <$> updateHsBind f hsBind
 updateHsDecl _ sig = pure sig
+
+updateHsBind :: Traversal' (HsBind GhcPs) (LHsSigWcType GhcPs)
+updateHsBind f bind@FunBind {} = (\x -> bind {fun_matches = x}) <$> updateMatchGroup f (fun_matches bind)
+updateHsBind _ bind = pure bind
+
+updateMatchGroup :: Traversal' (MatchGroup GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
+updateMatchGroup f mg@MG {} = (\x -> mg {mg_alts = x}) <$> updateLLMatch f (mg_alts mg)
+#if __GLASGOW_HASKELL__ < 900
+updateMatchGroup _ mg = pure mg
+#endif
+
+updateLocated :: Functor f => (a -> b -> f c) -> a -> Located b -> f (Located c)
+updateLocated f g (L l e) = L l <$> f g e
+
+updateLLMatch :: Traversal' (Located [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
+updateLLMatch = updateLocated updateLMatches
+
+updateLMatches :: Traversal' [LMatch GhcPs (LHsExpr GhcPs)] (LHsSigWcType GhcPs)
+updateLMatches f = traverse (updateLocated updateMatch f)
+
+updateMatch :: Traversal' (Match GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
+updateMatch f m@Match {} = (\x -> m {m_grhss = x}) <$> updateGrhss f (m_grhss m)
+#if __GLASGOW_HASKELL__ < 900
+updateMatch _ m = pure m
+#endif
+
+updateGrhss :: Traversal' (GRHSs GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
+updateGrhss f grhss@GRHSs {} = (\x -> grhss {grhssLocalBinds = x}) <$> updateLHsLocalBinds f (grhssLocalBinds grhss)
+#if __GLASGOW_HASKELL__ < 900
+updateGrhss _ grhss = pure grhss
+#endif
+
+updateLHsLocalBinds :: Traversal' (LHsLocalBinds GhcPs) (LHsSigWcType GhcPs)
+updateLHsLocalBinds = updateLocated updateLocalBinds
+
+updateLocalBinds :: Traversal' (HsLocalBinds GhcPs) (LHsSigWcType GhcPs)
+updateLocalBinds f (HsValBinds xHsValBinds hsValBindsLR) = HsValBinds xHsValBinds <$> updateHsValBindsLR f hsValBindsLR
+updateLocalBinds _ hsValBinds = pure hsValBinds
+
+updateHsValBindsLR :: Traversal' (HsValBindsLR GhcPs GhcPs) (LHsSigWcType GhcPs)
+updateHsValBindsLR f (ValBinds xValBinds lHsBindsLR lSigs) = ValBinds xValBinds lHsBindsLR <$> updateLSigs f lSigs
+updateHsValBindsLR _ valBinds = pure valBinds
+
+updateLSigs :: Traversal' [LSig GhcPs] (LHsSigWcType GhcPs)
+updateLSigs f = traverse (updateLocated updateSig f)
 
 updateSig :: Traversal' (Sig GhcPs) (LHsSigWcType GhcPs)
 updateSig f (TypeSig xSig ls t) = TypeSig xSig ls <$> f t
@@ -123,7 +168,7 @@ updateHsType ty@HsAppTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsFunTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsListTy {} =
+updateHsType ty@HsListTy {} = 
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsTupleTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)

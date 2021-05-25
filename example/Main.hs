@@ -34,7 +34,13 @@ f7 = (fromJust f8, fromJust f8)
 
 -- HsAppTy
 f8 :: Maybe Int
-f8 = Just fError
+f8 = Just f9
+
+f9 :: Int
+f9 = f10
+  where
+    f10 :: Int
+    f10 = fError
 
 -- HsTyVar
 fError :: Int

@@ -1,7 +1,9 @@
 example: fError
 CallStack (from HasCallStack):
-  error, called at example/Main.hs:41:10 in main:Main
-  fError, called at example/Main.hs:37:11 in main:Main
+  error, called at example/Main.hs:47:10 in main:Main
+  fError, called at example/Main.hs:43:11 in main:Main
+  f10, called at example/Main.hs:40:6 in main:Main
+  f9, called at example/Main.hs:37:11 in main:Main
   f8, called at example/Main.hs:33:16 in main:Main
   f7, called at example/Main.hs:29:11 in main:Main
   f6, called at example/Main.hs:25:15 in main:Main
