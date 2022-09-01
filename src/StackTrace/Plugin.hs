@@ -5,6 +5,7 @@ module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
+import GHC.Types.SrcLoc
 #if __GLASGOW_HASKELL__ >= 900
 import GHC.Plugins
 #else
@@ -49,10 +50,12 @@ importDeclQualified = QualifiedPre
 
 ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
-  mkGeneralLocated "haskell-stack-trace-plugin:GHC.Stack" $
+  L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
     { ideclQualified = importDeclQualified
     , ideclAs = Just $ noLoc ghcStackModuleName }
+  where
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "ThisFile" 1 1) Nothing
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
