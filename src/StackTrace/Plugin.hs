@@ -25,7 +25,7 @@ type Traversal s t a b
 type Traversal' s a = Traversal s s a a
 
 plugin :: Plugin
-plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = purePlugin}
+plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = impurePlugin}
 
 parsedPlugin ::
      [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
@@ -170,7 +170,7 @@ updateHsType ty@HsAppTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsFunTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsListTy {} = 
+updateHsType ty@HsListTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsTupleTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
