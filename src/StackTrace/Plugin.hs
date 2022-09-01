@@ -25,7 +25,7 @@ type Traversal s t a b
 type Traversal' s a = Traversal s s a a
 
 plugin :: Plugin
-plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = impurePlugin}
+plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = purePlugin}
 
 parsedPlugin ::
      [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
