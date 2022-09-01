@@ -51,7 +51,8 @@ ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
   noLoc $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    {ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName}
+    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName
+    , ideclImplicit = True}
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
