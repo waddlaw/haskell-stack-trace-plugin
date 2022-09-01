@@ -59,7 +59,7 @@ updateHsModule :: HsModule -> HsModule
 updateHsModule :: HsModule GhcPs -> HsModule GhcPs
 #endif
 updateHsModule hsm =
-  hsm {hsmodDecls = hsmodDecls'}
+  hsm {hsmodImports = hsmodImports', hsmodDecls = hsmodDecls'}
   where
     -- Traverse the haskell AST; if we have to add some HasStack
     -- constraint we set a flag in a (Any,) functor.
