@@ -49,10 +49,10 @@ importDeclQualified = QualifiedPre
 
 ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
-  noLoc $
+  mkGeneralLocated "haskell-stack-trace-plugin:GHC.Stack" $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName
-    , ideclImplicit = True}
+    { ideclQualified = importDeclQualified
+    , ideclAs = Just $ noLoc ghcStackModuleName }
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
