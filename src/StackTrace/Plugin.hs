@@ -52,10 +52,9 @@ ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified
-    , ideclAs = Just $ noLoc ghcStackModuleName }
+    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName }
   where
-    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "ThisFile" 1 1) Nothing
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
