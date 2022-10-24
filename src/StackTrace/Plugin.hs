@@ -5,16 +5,19 @@ module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
-import GHC.Types.SrcLoc
+
 #if __GLASGOW_HASKELL__ >= 900
 import GHC.Plugins
+import GHC.Types.SrcLoc
 #else
-
 import GhcPlugins
+import SrcLoc
 #endif
+
 #if __GLASGOW_HASKELL__ >= 810
 import GHC.Hs
 #endif
+
 #if __GLASGOW_HASKELL__ < 810
 import HsSyn
 #endif
@@ -57,7 +60,11 @@ ghcStackImport =
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
+#if __GLASGOW_HASKELL__ >= 900
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
+#else
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
+#endif
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
