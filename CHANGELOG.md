@@ -2,6 +2,8 @@
 
 ## Unreleased changes
 
+- Warnings of unused imports in GHC-9 [#16](https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16) (@s9gf4ult)
+
 ## 0.1.3.0
 
 - Added support `where` clause [#11](https://github.com/waddlaw/haskell-stack-trace-plugin/pull/11) (@waddlaw)
