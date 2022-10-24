@@ -8,10 +8,8 @@ import Data.Monoid (Any(Any, getAny))
 
 #if __GLASGOW_HASKELL__ >= 900
 import GHC.Plugins
-import GHC.Types.SrcLoc
 #else
 import GhcPlugins
-import SrcLoc
 #endif
 
 #if __GLASGOW_HASKELL__ >= 810
