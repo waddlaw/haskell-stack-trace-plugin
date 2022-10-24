@@ -5,6 +5,7 @@ module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
+import GHC.Types.SrcLoc
 #if __GLASGOW_HASKELL__ >= 900
 import GHC.Plugins
 #else
@@ -49,9 +50,14 @@ importDeclQualified = QualifiedPre
 
 ghcStackImport :: Located (ImportDecl (GhcPass p))
 ghcStackImport =
-  noLoc $
+  L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    {ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName}
+    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName }
+  where
+    -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
+    -- about unused imports. Even if the import is used
+    -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
 
 #if __GLASGOW_HASKELL__ >= 900
 updateHsModule :: HsModule -> HsModule
@@ -170,7 +176,7 @@ updateHsType ty@HsAppTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsFunTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsListTy {} = 
+updateHsType ty@HsListTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
 updateHsType ty@HsTupleTy {} =
   flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
