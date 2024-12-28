@@ -31,6 +31,14 @@ type Traversal s t a b
 
 type Traversal' s a = Traversal s s a a
 
+#if __GLASGOW_HASKELL__ < 900
+emptyLoc :: e -> Located e
+emptyLoc = noLoc
+#else
+emptyLoc :: e -> XRec GhcPs e
+emptyLoc = reLoc . noLoc
+#endif
+
 plugin :: Plugin
 plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = purePlugin}
 
@@ -232,15 +240,15 @@ updateHsType ty@(HsQualTy xty ctxt body) =
     then pure ty
     else flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
 updateHsType ty@HsTyVar {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 updateHsType ty@HsAppTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 updateHsType ty@HsFunTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 updateHsType ty@HsListTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 updateHsType ty@HsTupleTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 updateHsType ty = pure ty
 
 #if __GLASGOW_HASKELL__ < 810
@@ -266,7 +274,13 @@ hasHasCallStack = any (checkHsType . unLoc)
 
 -- make HasCallStack => constraint
 mkHSC :: LHsType GhcPs
-mkHSC = noLoc $ HsTyVar xQualTy NotPromoted lId
+mkHSC = emptyLoc $ HsTyVar xQualTy NotPromoted lId
 
+
+#if __GLASGOW_HASKELL__ < 900
 lId :: Located (IdP GhcPs)
 lId = noLoc $ mkRdrQual ghcStackModuleName $ mkClsOcc "HasCallStack"
+#else
+lId :: LIdP GhcPs
+lId = emptyLoc $ mkRdrQual ghcStackModuleName $ mkClsOcc "HasCallStack"
+#endif
