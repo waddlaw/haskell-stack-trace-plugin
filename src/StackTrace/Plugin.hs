@@ -245,22 +245,22 @@ updateHsSigType f hs@HsSig {} = (\x -> hs {sig_body = x}) <$> f (sig_body hs)
 updateLHsType :: Traversal' (LHsType GhcPs) (HsType GhcPs)
 updateLHsType = traverse
 
+-- | Wraps an HsType with a HasStackCall qualifier
+wrapInQualTy :: HsType GhcPs -> (Any, HsType GhcPs)
+wrapInQualTy ty =
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
+
 -- Main process
 updateHsType :: HsType GhcPs -> (Any, HsType GhcPs)
 updateHsType ty@(HsQualTy xty ctxt body) =
   if hasHasCallStack (unLoc ctxt)
     then pure ty
     else flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
-updateHsType ty@HsTyVar {} =
-  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
-updateHsType ty@HsAppTy {} =
-  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
-updateHsType ty@HsFunTy {} =
-  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
-updateHsType ty@HsListTy {} =
-  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
-updateHsType ty@HsTupleTy {} =
-  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
+updateHsType ty@HsTyVar {} = wrapInQualTy ty
+updateHsType ty@HsAppTy {} = wrapInQualTy ty
+updateHsType ty@HsFunTy {} = wrapInQualTy ty
+updateHsType ty@HsListTy {} = wrapInQualTy ty
+updateHsType ty@HsTupleTy {} = wrapInQualTy ty
 updateHsType ty = pure ty
 
 #if __GLASGOW_HASKELL__ < 810
