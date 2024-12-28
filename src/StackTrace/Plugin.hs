@@ -22,7 +22,7 @@ import HsSyn
 #endif
 
 -- srcSpan now requires strict maybe
-#if __GLASGOW_HASKELL__ >= 906
+#if __GLASGOW_HASKELL__ >= 904
 import GHC.Data.Strict as Strict (Maybe (Nothing))
 #endif
 
@@ -105,7 +105,7 @@ ghcStackImport =
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
-#if __GLASGOW_HASKELL__ >= 906
+#if __GLASGOW_HASKELL__ >= 904
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Strict.Nothing
 #else
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
