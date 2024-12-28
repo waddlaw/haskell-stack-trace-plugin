@@ -68,28 +68,30 @@ importDeclQualified = QualifiedPre
 
 #if __GLASGOW_HASKELL__ < 900
 ghcStackImport :: Located (ImportDecl GhcPs)
-#else
-ghcStackImport :: LImportDecl GhcPs
-#endif
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
     { ideclQualified = importDeclQualified, ideclAs = ideclAs }
   where
-#if __GLASGOW_HASKELL__ >= 900
-    ideclAs = Just $ reLoc $ noLoc ghcStackModuleName
-#else
     ideclAs = Just $ noLoc ghcStackModuleName
-#endif
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
+#else
+ghcStackImport :: LImportDecl GhcPs
+ghcStackImport =
+  reLoc $ L srcSpan $
+  (simpleImportDecl $ mkModuleName "GHC.Stack")
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs }
+  where
+    ideclAs = Just $ reLoc $ noLoc ghcStackModuleName
+
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
 #if __GLASGOW_HASKELL__ >= 910
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Strict.Nothing
-#elif __GLASGOW_HASKELL__ >= 900
-    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
 #else
-    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
+#endif
 #endif
 
 #if __GLASGOW_HASKELL__ >= 900 && __GLASGOW_HASKELL__ < 906
