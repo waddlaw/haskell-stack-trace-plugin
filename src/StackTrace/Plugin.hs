@@ -65,7 +65,12 @@ importDeclQualified :: ImportDeclQualifiedStyle
 importDeclQualified = QualifiedPre
 #endif
 
+
+#if __GLASGOW_HASKELL__ < 900
 ghcStackImport :: Located (ImportDecl GhcPs)
+#else
+ghcStackImport :: LImportDecl GhcPs
+#endif
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
