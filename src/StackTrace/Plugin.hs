@@ -60,12 +60,17 @@ importDeclQualified :: ImportDeclQualifiedStyle
 importDeclQualified = QualifiedPre
 #endif
 
-ghcStackImport :: Located (ImportDecl (GhcPass p))
+ghcStackImport :: Located (ImportDecl GhcPs)
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName }
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs }
   where
+#if __GLASGOW_HASKELL__ >= 900
+    ideclAs = Just $ reLoc $ noLoc ghcStackModuleName
+#else
+    ideclAs = Just $ noLoc ghcStackModuleName
+#endif
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
