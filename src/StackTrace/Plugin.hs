@@ -151,14 +151,14 @@ updateLLMatch :: Traversal' (Located [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcTy
 updateLLMatch = updateLocated updateLMatches
 #else
 updateLLMatch :: Traversal' (XRec GhcPs [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
-updateLLMatch f = traverse (updateLMatches f)
+updateLLMatch = traverse . updateLMatches
 #endif
 
 updateLMatches :: Traversal' [LMatch GhcPs (LHsExpr GhcPs)] (LHsSigWcType GhcPs)
 #if __GLASGOW_HASKELL__ < 900
 updateLMatches f = traverse (updateLocated updateMatch f)
 #else
-updateLMatches f = traverse (traverse (updateMatch f))
+updateLMatches = traverse . traverse . updateMatch
 #endif
 
 updateMatch :: Traversal' (Match GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
