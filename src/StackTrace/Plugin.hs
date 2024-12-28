@@ -146,11 +146,20 @@ updateMatchGroup _ mg = pure mg
 updateLocated :: Functor f => (a -> b -> f c) -> a -> Located b -> f (Located c)
 updateLocated f g (L l e) = L l <$> f g e
 
+#if __GLASGOW_HASKELL__ < 900
 updateLLMatch :: Traversal' (Located [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
 updateLLMatch = updateLocated updateLMatches
+#else
+updateLLMatch :: Traversal' (XRec GhcPs [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
+updateLLMatch f = traverse (updateLMatches f)
+#endif
 
 updateLMatches :: Traversal' [LMatch GhcPs (LHsExpr GhcPs)] (LHsSigWcType GhcPs)
+#if __GLASGOW_HASKELL__ < 900
 updateLMatches f = traverse (updateLocated updateMatch f)
+#else
+updateLMatches f = traverse (traverse (updateMatch f))
+#endif
 
 updateMatch :: Traversal' (Match GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
 updateMatch f m@Match {} = (\x -> m {m_grhss = x}) <$> updateGrhss f (m_grhss m)
