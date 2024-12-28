@@ -160,8 +160,12 @@ updateLHsSigWsType _ lhs = pure lhs
 #endif
 
 updateLHsSigType :: Traversal' (LHsSigType GhcPs) (LHsType GhcPs)
+#if __GLASGOW_HASKELL__ > 902
+updateLHsSigType f lhs@HsSig {} = (\x -> lhs {sig_body = x}) <$> f (sig_body lhs)
+#else
 updateLHsSigType f lhs@HsIB {} =
   (\x -> lhs {hsib_body = x}) <$> f (hsib_body lhs)
+#endif
 #if __GLASGOW_HASKELL__ < 900
 updateLHsSigType _ lhs = pure lhs
 #endif
