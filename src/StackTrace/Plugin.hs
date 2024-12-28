@@ -284,7 +284,7 @@ hasHasCallStack = any (checkHsType . unLoc)
 
 xTyVar :: XTyVar GhcPs
 #if __GLASGOW_HASKELL__ >= 912
-xTyVar = EpToken "'"
+xTyVar = NoEpTok
 #elif __GLASGOW_HASKELL__ >= 910
 xTyVar = []
 #elif __GLASGOW_HASKELL__ >= 900
