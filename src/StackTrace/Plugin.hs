@@ -168,13 +168,17 @@ updateMatch _ m = pure m
 #endif
 
 updateGrhss :: Traversal' (GRHSs GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
-updateGrhss f grhss@GRHSs {} = (\x -> grhss {grhssLocalBinds = x}) <$> updateLHsLocalBinds f (grhssLocalBinds grhss)
 #if __GLASGOW_HASKELL__ < 900
+updateGrhss f grhss@GRHSs {} = (\x -> grhss {grhssLocalBinds = x}) <$> updateLHsLocalBinds f (grhssLocalBinds grhss)
 updateGrhss _ grhss = pure grhss
+#else
+updateGrhss f grhss = (\x -> grhss {grhssLocalBinds = x}) <$> updateLocalBinds f (grhssLocalBinds grhss)
 #endif
 
+#if __GLASGOW_HASKELL__ < 900
 updateLHsLocalBinds :: Traversal' (LHsLocalBinds GhcPs) (LHsSigWcType GhcPs)
 updateLHsLocalBinds = updateLocated updateLocalBinds
+#endif
 
 updateLocalBinds :: Traversal' (HsLocalBinds GhcPs) (LHsSigWcType GhcPs)
 updateLocalBinds f (HsValBinds xHsValBinds hsValBindsLR) = HsValBinds xHsValBinds <$> updateHsValBindsLR f hsValBindsLR
