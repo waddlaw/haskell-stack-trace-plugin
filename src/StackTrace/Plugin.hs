@@ -189,7 +189,11 @@ updateHsValBindsLR f (ValBinds xValBinds lHsBindsLR lSigs) = ValBinds xValBinds 
 updateHsValBindsLR _ valBinds = pure valBinds
 
 updateLSigs :: Traversal' [LSig GhcPs] (LHsSigWcType GhcPs)
+#if __GLASGOW_HASKELL__ < 900
 updateLSigs f = traverse (updateLocated updateSig f)
+#else
+updateLSigs = traverse . traverse . updateSig
+#endif
 
 updateSig :: Traversal' (Sig GhcPs) (LHsSigWcType GhcPs)
 updateSig f (TypeSig xSig ls t) = TypeSig xSig ls <$> f t
