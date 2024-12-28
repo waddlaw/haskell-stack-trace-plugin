@@ -29,12 +29,23 @@ type Traversal' s a = Traversal s s a a
 plugin :: Plugin
 plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = purePlugin}
 
+#if __GLASGOW_HASKELL__ < 904
 parsedPlugin ::
      [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
 parsedPlugin _ _ pm = do
   let m = updateHsModule <$> hpm_module pm
       pm' = pm {hpm_module = m}
   return pm'
+#else
+parsedPlugin ::
+     [CommandLineOption] -> ModSummary -> ParsedResult -> Hsc ParsedResult
+parsedPlugin _ _ pr = do
+  let pm = parsedResultModule pr
+      m = updateHsModule <$> hpm_module pm
+      pm' = pm {hpm_module = m}
+  return pr {parsedResultModule = pm'}
+#endif
+
 
 -- Use qualified import for GHC.Stack as "AutoImported.GHC.Stack"
 -- ...this should not interfere with other imports...
