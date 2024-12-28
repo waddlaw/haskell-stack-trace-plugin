@@ -20,6 +20,11 @@ import GHC.Hs
 import HsSyn
 #endif
 
+-- srcSpan now requires strict maybe
+#if __GLASGOW_HASKELL__ >= 910
+import GHC.Data.Strict as Strict (Maybe (Nothing))
+#endif
+
 type Traversal s t a b
    = forall f. Applicative f =>
                  (a -> f b) -> s -> f t
@@ -74,7 +79,9 @@ ghcStackImport =
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
-#if __GLASGOW_HASKELL__ >= 900
+#if __GLASGOW_HASKELL__ >= 910
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Strict.Nothing
+#elif __GLASGOW_HASKELL__ >= 900
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
 #else
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
