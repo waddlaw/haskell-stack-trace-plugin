@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
@@ -21,7 +22,7 @@ import HsSyn
 #endif
 
 -- srcSpan now requires strict maybe
-#if __GLASGOW_HASKELL__ >= 910
+#if __GLASGOW_HASKELL__ >= 906
 import GHC.Data.Strict as Strict (Maybe (Nothing))
 #endif
 
@@ -34,8 +35,11 @@ type Traversal' s a = Traversal s s a a
 #if __GLASGOW_HASKELL__ < 900
 emptyLoc :: e -> Located e
 emptyLoc = noLoc
+#elif __GLASGOW_HASKELL__ < 910
+emptyLoc :: a -> LocatedAn an a
+emptyLoc = noLocA
 #else
-emptyLoc :: e -> XRec GhcPs e
+emptyLoc :: (HasAnnotation b) => e -> GenLocated b e
 emptyLoc = reLoc . noLoc
 #endif
 
@@ -79,23 +83,29 @@ ghcStackImport :: Located (ImportDecl GhcPs)
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified, ideclAs = ideclAs }
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs' }
   where
-    ideclAs = Just $ noLoc ghcStackModuleName
+    ideclAs' = Just $ noLoc ghcStackModuleName
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
 #else
 ghcStackImport :: LImportDecl GhcPs
 ghcStackImport =
-  reLoc $ L srcSpan $
+  reLoc' $ L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified, ideclAs = ideclAs }
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs' }
   where
-    ideclAs = Just $ reLoc $ noLoc ghcStackModuleName
+    ideclAs' = Just $ emptyLoc ghcStackModuleName
+
+#if __GLASGOW_HASKELL__ >= 910
+    reLoc' = reLoc
+#else
+    reLoc' = reLocA
+#endif
 
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
-#if __GLASGOW_HASKELL__ >= 910
+#if __GLASGOW_HASKELL__ >= 906
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Strict.Nothing
 #else
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
@@ -272,9 +282,20 @@ hasHasCallStack = any (checkHsType . unLoc)
     checkHsType (HsTyVar _ _ lid) = unLoc lid == (mkRdrUnqual $ mkClsOcc  "HasCallStack")
     checkHsType _ = False
 
+xTyVar :: XTyVar GhcPs
+#if __GLASGOW_HASKELL__ >= 912
+xTyVar = EpToken "'"
+#elif __GLASGOW_HASKELL__ >= 910
+xTyVar = []
+#elif __GLASGOW_HASKELL__ >= 900
+xTyVar = noAnn
+#else
+xTyVar = xQualTy
+#endif
+
 -- make HasCallStack => constraint
 mkHSC :: LHsType GhcPs
-mkHSC = emptyLoc $ HsTyVar xQualTy NotPromoted lId
+mkHSC = emptyLoc $ HsTyVar xTyVar NotPromoted lId
 
 
 #if __GLASGOW_HASKELL__ < 900
