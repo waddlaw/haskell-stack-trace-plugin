@@ -64,7 +64,7 @@ ghcStackImport =
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
 #endif
 
-#if __GLASGOW_HASKELL__ >= 900
+#if __GLASGOW_HASKELL__ >= 900 && __GLASGOW_HASKELL__ < 906
 updateHsModule :: HsModule -> HsModule
 #else
 updateHsModule :: HsModule GhcPs -> HsModule GhcPs
@@ -160,7 +160,7 @@ updateLHsSigWsType _ lhs = pure lhs
 #endif
 
 updateLHsSigType :: Traversal' (LHsSigType GhcPs) (LHsType GhcPs)
-#if __GLASGOW_HASKELL__ > 902
+#if __GLASGOW_HASKELL__ >= 902
 updateLHsSigType f lhs@HsSig {} = (\x -> lhs {sig_body = x}) <$> f (sig_body lhs)
 #else
 updateLHsSigType f lhs@HsIB {} =
