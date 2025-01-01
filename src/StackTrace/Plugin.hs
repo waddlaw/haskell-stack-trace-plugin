@@ -1,22 +1,29 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 module StackTrace.Plugin (plugin) where
 
 import Control.Arrow (first)
 import Data.Monoid (Any(Any, getAny))
-import GHC.Types.SrcLoc
+
 #if __GLASGOW_HASKELL__ >= 900
 import GHC.Plugins
 #else
-
 import GhcPlugins
 #endif
+
 #if __GLASGOW_HASKELL__ >= 810
 import GHC.Hs
 #endif
+
 #if __GLASGOW_HASKELL__ < 810
 import HsSyn
+#endif
+
+-- srcSpan now requires strict maybe
+#if __GLASGOW_HASKELL__ >= 904
+import GHC.Data.Strict as Strict (Maybe (Nothing))
 #endif
 
 type Traversal s t a b
@@ -25,15 +32,37 @@ type Traversal s t a b
 
 type Traversal' s a = Traversal s s a a
 
+#if __GLASGOW_HASKELL__ < 900
+emptyLoc :: e -> Located e
+emptyLoc = noLoc
+#elif __GLASGOW_HASKELL__ < 910
+emptyLoc :: a -> LocatedAn an a
+emptyLoc = noLocA
+#else
+emptyLoc :: (HasAnnotation b) => e -> GenLocated b e
+emptyLoc = reLoc . noLoc
+#endif
+
 plugin :: Plugin
 plugin = defaultPlugin {parsedResultAction = parsedPlugin, pluginRecompile = purePlugin}
 
+#if __GLASGOW_HASKELL__ < 904
 parsedPlugin ::
      [CommandLineOption] -> ModSummary -> HsParsedModule -> Hsc HsParsedModule
 parsedPlugin _ _ pm = do
   let m = updateHsModule <$> hpm_module pm
       pm' = pm {hpm_module = m}
   return pm'
+#else
+parsedPlugin ::
+     [CommandLineOption] -> ModSummary -> ParsedResult -> Hsc ParsedResult
+parsedPlugin _ _ pr = do
+  let pm = parsedResultModule pr
+      m = updateHsModule <$> hpm_module pm
+      pm' = pm {hpm_module = m}
+  return pr {parsedResultModule = pm'}
+#endif
+
 
 -- Use qualified import for GHC.Stack as "AutoImported.GHC.Stack"
 -- ...this should not interfere with other imports...
@@ -48,18 +77,42 @@ importDeclQualified :: ImportDeclQualifiedStyle
 importDeclQualified = QualifiedPre
 #endif
 
-ghcStackImport :: Located (ImportDecl (GhcPass p))
+
+#if __GLASGOW_HASKELL__ < 900
+ghcStackImport :: Located (ImportDecl GhcPs)
 ghcStackImport =
   L srcSpan $
   (simpleImportDecl $ mkModuleName "GHC.Stack")
-    { ideclQualified = importDeclQualified, ideclAs = Just $ noLoc ghcStackModuleName }
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs' }
   where
+    ideclAs' = Just $ noLoc ghcStackModuleName
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1)
+#else
+ghcStackImport :: LImportDecl GhcPs
+ghcStackImport =
+  reLoc' $ L srcSpan $
+  (simpleImportDecl $ mkModuleName "GHC.Stack")
+    { ideclQualified = importDeclQualified, ideclAs = ideclAs' }
+  where
+    ideclAs' = Just $ emptyLoc ghcStackModuleName
+
+#if __GLASGOW_HASKELL__ >= 910
+    reLoc' = reLoc
+#else
+    reLoc' = reLocA
+#endif
+
     -- This is for GHC-9 related problems. @noLoc@ causes GHC to throw warnings
     -- about unused imports. Even if the import is used
     -- See: https://github.com/waddlaw/haskell-stack-trace-plugin/issues/16
+#if __GLASGOW_HASKELL__ >= 904
+    srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Strict.Nothing
+#else
     srcSpan = RealSrcSpan (realSrcLocSpan $ mkRealSrcLoc "haskell-stack-trace-plugin:very-unique-file-name-to-avoid-collision" 1 1) Nothing
+#endif
+#endif
 
-#if __GLASGOW_HASKELL__ >= 900
+#if __GLASGOW_HASKELL__ >= 900 && __GLASGOW_HASKELL__ < 906
 updateHsModule :: HsModule -> HsModule
 #else
 updateHsModule :: HsModule GhcPs -> HsModule GhcPs
@@ -108,14 +161,25 @@ updateMatchGroup f mg@MG {} = (\x -> mg {mg_alts = x}) <$> updateLLMatch f (mg_a
 updateMatchGroup _ mg = pure mg
 #endif
 
+#if __GLASGOW_HASKELL__ < 900
 updateLocated :: Functor f => (a -> b -> f c) -> a -> Located b -> f (Located c)
 updateLocated f g (L l e) = L l <$> f g e
+#endif
 
+#if __GLASGOW_HASKELL__ < 900
 updateLLMatch :: Traversal' (Located [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
 updateLLMatch = updateLocated updateLMatches
+#else
+updateLLMatch :: Traversal' (XRec GhcPs [LMatch GhcPs (LHsExpr GhcPs)]) (LHsSigWcType GhcPs)
+updateLLMatch = traverse . updateLMatches
+#endif
 
 updateLMatches :: Traversal' [LMatch GhcPs (LHsExpr GhcPs)] (LHsSigWcType GhcPs)
+#if __GLASGOW_HASKELL__ < 900
 updateLMatches f = traverse (updateLocated updateMatch f)
+#else
+updateLMatches = traverse . traverse . updateMatch
+#endif
 
 updateMatch :: Traversal' (Match GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
 updateMatch f m@Match {} = (\x -> m {m_grhss = x}) <$> updateGrhss f (m_grhss m)
@@ -124,13 +188,17 @@ updateMatch _ m = pure m
 #endif
 
 updateGrhss :: Traversal' (GRHSs GhcPs (LHsExpr GhcPs)) (LHsSigWcType GhcPs)
-updateGrhss f grhss@GRHSs {} = (\x -> grhss {grhssLocalBinds = x}) <$> updateLHsLocalBinds f (grhssLocalBinds grhss)
 #if __GLASGOW_HASKELL__ < 900
+updateGrhss f grhss@GRHSs {} = (\x -> grhss {grhssLocalBinds = x}) <$> updateLHsLocalBinds f (grhssLocalBinds grhss)
 updateGrhss _ grhss = pure grhss
+#else
+updateGrhss f grhss = (\x -> grhss {grhssLocalBinds = x}) <$> updateLocalBinds f (grhssLocalBinds grhss)
 #endif
 
+#if __GLASGOW_HASKELL__ < 900
 updateLHsLocalBinds :: Traversal' (LHsLocalBinds GhcPs) (LHsSigWcType GhcPs)
 updateLHsLocalBinds = updateLocated updateLocalBinds
+#endif
 
 updateLocalBinds :: Traversal' (HsLocalBinds GhcPs) (LHsSigWcType GhcPs)
 updateLocalBinds f (HsValBinds xHsValBinds hsValBindsLR) = HsValBinds xHsValBinds <$> updateHsValBindsLR f hsValBindsLR
@@ -141,7 +209,11 @@ updateHsValBindsLR f (ValBinds xValBinds lHsBindsLR lSigs) = ValBinds xValBinds 
 updateHsValBindsLR _ valBinds = pure valBinds
 
 updateLSigs :: Traversal' [LSig GhcPs] (LHsSigWcType GhcPs)
+#if __GLASGOW_HASKELL__ < 900
 updateLSigs f = traverse (updateLocated updateSig f)
+#else
+updateLSigs = traverse . traverse . updateSig
+#endif
 
 updateSig :: Traversal' (Sig GhcPs) (LHsSigWcType GhcPs)
 updateSig f (TypeSig xSig ls t) = TypeSig xSig ls <$> f t
@@ -155,14 +227,28 @@ updateLHsSigWsType _ lhs = pure lhs
 #endif
 
 updateLHsSigType :: Traversal' (LHsSigType GhcPs) (LHsType GhcPs)
+#if __GLASGOW_HASKELL__ >= 902
+updateLHsSigType = traverse . updateHsSigType
+#else
 updateLHsSigType f lhs@HsIB {} =
   (\x -> lhs {hsib_body = x}) <$> f (hsib_body lhs)
+#endif
 #if __GLASGOW_HASKELL__ < 900
 updateLHsSigType _ lhs = pure lhs
 #endif
 
+
+#if __GLASGOW_HASKELL__ >= 902
+updateHsSigType :: Traversal' (HsSigType GhcPs) (LHsType GhcPs)
+updateHsSigType f hs@HsSig {} = (\x -> hs {sig_body = x}) <$> f (sig_body hs)
+#endif
 updateLHsType :: Traversal' (LHsType GhcPs) (HsType GhcPs)
 updateLHsType = traverse
+
+-- | Wraps an HsType with a HasStackCall qualifier
+wrapInQualTy :: HsType GhcPs -> (Any, HsType GhcPs)
+wrapInQualTy ty =
+  flagASTModified $ HsQualTy xQualTy (emptyLoc $ appendHSC []) (emptyLoc ty)
 
 -- Main process
 updateHsType :: HsType GhcPs -> (Any, HsType GhcPs)
@@ -170,16 +256,11 @@ updateHsType ty@(HsQualTy xty ctxt body) =
   if hasHasCallStack (unLoc ctxt)
     then pure ty
     else flagASTModified $ HsQualTy xty (fmap appendHSC ctxt) body
-updateHsType ty@HsTyVar {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsAppTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsFunTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsListTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
-updateHsType ty@HsTupleTy {} =
-  flagASTModified $ HsQualTy xQualTy (noLoc $ appendHSC []) (noLoc ty)
+updateHsType ty@HsTyVar {} = wrapInQualTy ty
+updateHsType ty@HsAppTy {} = wrapInQualTy ty
+updateHsType ty@HsFunTy {} = wrapInQualTy ty
+updateHsType ty@HsListTy {} = wrapInQualTy ty
+updateHsType ty@HsTupleTy {} = wrapInQualTy ty
 updateHsType ty = pure ty
 
 #if __GLASGOW_HASKELL__ < 810
@@ -203,9 +284,26 @@ hasHasCallStack = any (checkHsType . unLoc)
     checkHsType (HsTyVar _ _ lid) = unLoc lid == (mkRdrUnqual $ mkClsOcc  "HasCallStack")
     checkHsType _ = False
 
+xTyVar :: XTyVar GhcPs
+#if __GLASGOW_HASKELL__ >= 912
+xTyVar = NoEpTok
+#elif __GLASGOW_HASKELL__ >= 910
+xTyVar = []
+#elif __GLASGOW_HASKELL__ >= 900
+xTyVar = noAnn
+#else
+xTyVar = xQualTy
+#endif
+
 -- make HasCallStack => constraint
 mkHSC :: LHsType GhcPs
-mkHSC = noLoc $ HsTyVar xQualTy NotPromoted lId
+mkHSC = emptyLoc $ HsTyVar xTyVar NotPromoted lId
 
+
+#if __GLASGOW_HASKELL__ < 900
 lId :: Located (IdP GhcPs)
 lId = noLoc $ mkRdrQual ghcStackModuleName $ mkClsOcc "HasCallStack"
+#else
+lId :: LIdP GhcPs
+lId = emptyLoc $ mkRdrQual ghcStackModuleName $ mkClsOcc "HasCallStack"
+#endif
