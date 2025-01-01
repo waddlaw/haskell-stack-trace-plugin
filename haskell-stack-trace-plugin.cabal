@@ -55,8 +55,8 @@ test-suite test
   hs-source-dirs:     test
   type:               exitcode-stdio-1.0
   build-depends:
-    , bytestring     >=0.10 && <0.12
-    , hspec          ^>=2.8
+    , bytestring     >=0.10
+    , hspec          ^>=2.8 || ^>=2.11
     , typed-process  ^>=0.2
 
   build-tool-depends: hspec-discover:hspec-discover ^>=2.8
