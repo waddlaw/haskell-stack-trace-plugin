@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc-version: ["8.6", "8.8", "8.10", "9.4", "9.6", "9.8", "9.12"]
+        ghc-version: ["8.6", "8.8", "8.10", "9.4", "9.6", "9.8", "9.10", "9.12"]
         cabal-version: ["3.12"]
         cache-version: ["2025-01-01"]
     steps:
