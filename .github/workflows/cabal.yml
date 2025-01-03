@@ -1,43 +1,53 @@
 name: cabal
-
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ '*' ]
-
+    branches: ['*']
 jobs:
   build:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        ghc: ["8.6", "8.8", "8.10", "9.0", "9.2", "9.4"]
-        cabal: ["3.6"]
-        cache-version: ["2022-10-25"]
-
+        ghc-version: ["8.6", "8.8", "8.10", "9.4", "9.6", "9.8", "9.12"]
+        cabal-version: ["3.12"]
+        cache-version: ["2025-01-01"]
     steps:
-    - uses: actions/checkout@v2
-    - uses: haskell/actions/setup@v2
-      with:
-        ghc-version: ${{ matrix.ghc }}
-        cabal-version: ${{ matrix.cabal }}
-
-    - name: Cache ~/.cabal/store
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cabal/store
-          dist-newstyle
-        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.cache-version }}-cabal
-
-    - name: Install dependencies
-      run: |
-        cabal update
-        cabal configure --disable-optimization --enable-tests --write-ghc-environment-files=always -j2
-        cabal build --only-dependencies
-
-    - name: Build & Test
-      run: |
-        cabal build --flag dev
-        cabal test --flag dev
+      - uses: actions/checkout@v4
+      - name: Set up GHC ${{ matrix.ghc-version }}
+        uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ matrix.ghc-version }}
+          cabal-version: ${{ matrix.cabal-version }}
+          cabal-update: true
+      - name: Configure the build
+        run: |
+          cabal configure --enable-tests --disable-documentation --disable-optimization --write-ghc-environment-files=always -j2
+          cabal build all --dry-run
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v4
+        id: cache
+        env:
+          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}-${{ matrix.cache-version }}
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ env.key }}-plan-${{ hashFiles('**/plan.json') }}
+          restore-keys: ${{ env.key }}-
+      - name: Install dependencies
+        # If we had an exact cache hit, the dependencies will be up to date.
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cabal build all --only-dependencies
+      # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
+      - name: Save cached dependencies
+        uses: actions/cache/save@v4
+        # If we had an exact cache hit, trying to save the cache would error because of key clash.
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+      - name: Build
+        run: cabal build all --flag dev
+      - name: Run tests
+        run: cabal test all --flag dev
